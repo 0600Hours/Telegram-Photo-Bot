@@ -1,8 +1,10 @@
 import telegram
 import logging
-from telegram.ext import Updater
+from telegram.ext import CommandHandler, MessageHandler, Updater
 import urllib.request, json
 from operator import attrgetter
+import random
+import traceback
 
 import tokens
 
@@ -27,20 +29,17 @@ class PhotoBot:
 
     def run(self):
         print("run")
-        get_photo("tiger");
-
         self.updater.start_polling()
         self.updater.idle()
-
-
 
 # Non-handler helper methods
 
 def get_photo(tag):
     print("get_photo tag=" + tag)
+    tag = '+'.join(tag.split(' '))
 
     # search flickr for tag
-    search_url_base = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key={0}&tags={1}&text={1}&sort=relevance&safe_search=1&content_type=1&media=photos&per_page=10&page={2}&format=json&nojsoncallback=1"
+    search_url_base = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key={0}&tags={1}&text={1}&sort=relevance&safe_search=1&content_type=1&media=photos&per_page=500&page={2}&format=json&nojsoncallback=1"
     search_url = search_url_base.format(FLICKR_TOKEN, tag, 1)
 
     print("http request to " + search_url)
@@ -69,6 +68,28 @@ def get_photo(tag):
 
     return largest['source']
 
+def handle_getpic(bot, update, args=list()):
+    print("handle_getpic args=" + str(args))
+    message = update.message
+
+    if args:
+        tag = ' '.join(args)
+    else:
+        tag = random.choice(TAGS)
+
+    print("tag=" + tag)
+
+    try:
+        photo_url = get_photo(tag)
+        message.reply_photo(photo=photo_url)
+    except KeyboardInterrupt:
+        return
+    except Exception as e:
+        message.reply_text(text="Something went wrong while searching for " + tag)
+        traceback.print_exc()
+
+
+handler_getpic = CommandHandler('getpic', handle_getpic, pass_args=True)
 
 def main():
     print("main")
