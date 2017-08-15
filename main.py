@@ -122,6 +122,17 @@ def handle_getpic(bot, update, args=list()):
 
 handler_getpic = CommandHandler('getpic', handle_getpic, pass_args=True)
 
+def handle_gettags(bot, update):
+    print("handle_gettags")
+    message = update.message
+
+    response = ', '.join(TAGS)
+    print("current tags: " + response)
+
+    message.reply_text(text="Current tags: " + response)
+
+handler_gettags = CommandHandler('gettags', handle_gettags)
+
 def main():
     print("main")
     handlers = [v for k, v in globals().items() if k.startswith('handler')]
