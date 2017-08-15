@@ -1,13 +1,14 @@
 import telegram
 import logging
-import urllib.request, json
 from telegram.ext import Updater
+import urllib.request, json
+from operator import attrgetter
 
 import tokens
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG
+    level=logging.INFO
 )
 
 BOT_TOKEN = tokens.BOT_TOKEN
@@ -36,13 +37,36 @@ class PhotoBot:
 # Non-handler helper methods
 
 def get_photo(tag):
-    print("get_photo")
-    urlBase = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key={0}&tags={1}&text={1}&sort=relevance&safe_search=1&content_type=1&media=photos&per_page=10&page={2}&format=json&nojsoncallback=1"
-    url = urlBase.format(FLICKR_TOKEN, tag, 1)
+    print("get_photo tag=" + tag)
 
-    with urllib.request.urlopen(url) as request:
-        response = json.loads(request.read().decode())
-        print (response['photos']['photo'][0])
+    # search flickr for tag
+    search_url_base = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key={0}&tags={1}&text={1}&sort=relevance&safe_search=1&content_type=1&media=photos&per_page=10&page={2}&format=json&nojsoncallback=1"
+    search_url = search_url_base.format(FLICKR_TOKEN, tag, 1)
+
+    print("http request to " + search_url)
+    with urllib.request.urlopen(search_url) as search_request:
+        search_response = json.loads(search_request.read().decode())
+
+    image_info = search_response['photos']['photo'][0]
+    print 
+
+    # get images from search result
+
+    sizes_url_base = "https://api.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key={0}&photo_id={1}&format=json&nojsoncallback=1"
+    sizes_url = sizes_url_base.format(FLICKR_TOKEN, image_info['id'])
+
+    print("http request to " + sizes_url)
+    with urllib.request.urlopen(sizes_url) as sizes_request:
+        sizes_response = json.loads(sizes_request.read().decode())
+
+    sizes = sizes_response['sizes']['size']
+
+    # find largest image
+
+    widths = [int(x['width']) for x in sizes]
+    largest = [x for x in sizes if x['width'] == str(max(widths))][0]
+
+    image_url = largest['source']
 
 
 def main():
