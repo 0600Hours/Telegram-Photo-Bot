@@ -26,21 +26,23 @@ class PhotoBot:
 
     def run(self):
         print("run")
+        get_photo("tiger");
+
         self.updater.start_polling()
         self.updater.idle()
 
-        get_photo("tiger");
+
 
 # Non-handler helper methods
 
 def get_photo(tag):
     print("get_photo")
-    url = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key={0}&tags={1}&text={1}&sort=relevance&safe_search=1&content_type=1&media=photos&per_page=500&page={2}&format=json&nojsoncallback=1"
-    url.format(FLICKR_TOKEN, tag, 1)
+    urlBase = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key={0}&tags={1}&text={1}&sort=relevance&safe_search=1&content_type=1&media=photos&per_page=10&page={2}&format=json&nojsoncallback=1"
+    url = urlBase.format(FLICKR_TOKEN, tag, 1)
 
     with urllib.request.urlopen(url) as request:
         response = json.loads(request.read().decode())
-        print (response)
+        print (response['photos']['photo'][0])
 
 
 def main():
