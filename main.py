@@ -48,7 +48,7 @@ def get_photo(tag):
         search_response = json.loads(search_request.read().decode())
 
     image_info = search_response['photos']['photo'][0]
-    print 
+    print("found image id " + image_info['id'])
 
     # get images from search result
 
@@ -65,8 +65,9 @@ def get_photo(tag):
 
     widths = [int(x['width']) for x in sizes]
     largest = [x for x in sizes if x['width'] == str(max(widths))][0]
+    print("chose size {0} ({1}x{2}) at {3}".format(largest['label'], largest['width'], largest['height'], largest['source']))
 
-    image_url = largest['source']
+    return largest['source']
 
 
 def main():
