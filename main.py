@@ -17,6 +17,8 @@ BOT_TOKEN = tokens.BOT_TOKEN
 FLICKR_TOKEN = tokens.FLICKR_TOKEN
 DELAY = 2 * 60 * 60
 TAGS = ["tiger", "cheetah", "lion", "snow leopard"]
+ID_FILE_PATH = "ids.txt"
+PAST_IDS = []
 
 class PhotoBot:
     def __init__(self, token, handlers):
@@ -39,14 +41,39 @@ def get_photo(tag):
     tag = '+'.join(tag.split(' '))
 
     # search flickr for tag
-    search_url_base = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key={0}&tags={1}&text={1}&sort=relevance&safe_search=1&content_type=1&media=photos&per_page=500&page={2}&format=json&nojsoncallback=1"
-    search_url = search_url_base.format(FLICKR_TOKEN, tag, 1)
+    results_per_page = 500
+    page = 1
+    search_url_base = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key={0}&tags={1}&text={1}&sort=relevance&safe_search=1&content_type=1&media=photos&per_page={3}&page={2}&format=json&nojsoncallback=1"
+    search_url = search_url_base.format(FLICKR_TOKEN, tag, page, results_per_page)
 
     print("http request to " + search_url)
     with urllib.request.urlopen(search_url) as search_request:
         search_response = json.loads(search_request.read().decode())
 
-    image_info = search_response['photos']['photo'][0]
+    # find unique image
+    response_count = len(search_response['photos']['photo'])
+    image_order = random.sample(range(0, response_count), response_count)
+    index = image_order.pop()
+    image_info = search_response['photos']['photo'][index]
+    print("checking image #" + str(index) + '(' + image_info['id'] + ')')
+    while image_info['id'] in PAST_IDS:
+        #if we run out of images, go to next page
+        if not image_order:
+            page = page + 1
+            print("no more images. moving to page " + page)
+            search_url = search_url_base.format(FLICKR_TOKEN, tag, page, results_per_page)
+            print("http request to " + search_url)
+            with urllib.request.urlopen(search_url) as search_request:
+                search_response = json.loads(search_request.read().decode())
+
+            response_count = len(search_response['photos']['photo'])
+            image_order = random.sample(range(0, response_count), response_count)
+
+        index = image_order.pop()
+        image_info = search_response['photos']['photo'][index]
+        print("image not unique. checking image #" + str(index) + '(' + image_info['id'] + ')')
+
+
     print("found image id " + image_info['id'])
 
     # get images from search result
@@ -66,7 +93,9 @@ def get_photo(tag):
     largest = [x for x in sizes if x['width'] == str(max(widths))][0]
     print("chose size {0} ({1}x{2}) at {3}".format(largest['label'], largest['width'], largest['height'], largest['source']))
 
-    return largest['source']
+    PAST_IDS.append(image_info['id'])
+
+    return image_info['id'], largest['source']
 
 def handle_getpic(bot, update, args=list()):
     print("handle_getpic args=" + str(args))
@@ -80,7 +109,9 @@ def handle_getpic(bot, update, args=list()):
     print("tag=" + tag)
 
     try:
-        photo_url = get_photo(tag)
+        photo_id, photo_url = get_photo(tag)
+        with open(ID_FILE_PATH, 'a') as id_file:
+            id_file.write(photo_id + "\n")
         message.reply_photo(photo=photo_url)
     except KeyboardInterrupt:
         return
@@ -94,6 +125,9 @@ handler_getpic = CommandHandler('getpic', handle_getpic, pass_args=True)
 def main():
     print("main")
     handlers = [v for k, v in globals().items() if k.startswith('handler')]
+
+    with open(ID_FILE_PATH, 'w+') as id_file:
+        PAST_IDS = id_file.read().splitlines()
 
     quote = PhotoBot(BOT_TOKEN, handlers)
     quote.run()
