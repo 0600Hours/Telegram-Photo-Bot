@@ -108,16 +108,10 @@ def handle_getpic(bot, update, args=list()):
 
     print("tag=" + tag)
 
-    try:
-        photo_id, photo_url = get_photo(tag)
-        with open(ID_FILE_PATH, 'a') as id_file:
-            id_file.write(photo_id + "\n")
-        message.reply_photo(photo=photo_url)
-    except KeyboardInterrupt:
-        return
-    except Exception as e:
-        message.reply_text(text="Something went wrong while searching for " + tag)
-        traceback.print_exc()
+    photo_id, photo_url = get_photo(tag)
+    with open(ID_FILE_PATH, 'a') as id_file:
+        id_file.write(photo_id + "\n")
+    message.reply_photo(photo=photo_url)
 
 
 handler_getpic = CommandHandler('getpic', handle_getpic, pass_args=True)
