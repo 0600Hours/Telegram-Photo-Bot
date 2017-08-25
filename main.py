@@ -57,7 +57,7 @@ def get_photo(tag):
     image_info = search_response['photos']['photo'][index]
     print("checking image #" + str(index) + '(' + image_info['id'] + ')')
     while image_info['id'] in PAST_IDS:
-        #if we run out of images, go to next page
+        # if we run out of images, go to next page
         if not image_order:
             page = page + 1
             print("no more images. moving to page " + page)
@@ -97,6 +97,8 @@ def get_photo(tag):
 
     return image_info['id'], largest['source']
 
+# command handlers
+
 def handle_getpic(bot, update, args=list()):
     print("handle_getpic args=" + str(args))
     message = update.message
@@ -113,7 +115,6 @@ def handle_getpic(bot, update, args=list()):
         id_file.write(photo_id + "\n")
     message.reply_photo(photo=photo_url)
 
-
 handler_getpic = CommandHandler('getpic', handle_getpic, pass_args=True)
 
 def handle_gettags(bot, update):
@@ -126,6 +127,26 @@ def handle_gettags(bot, update):
     message.reply_text(text="Current tags: " + response)
 
 handler_gettags = CommandHandler('gettags', handle_gettags)
+handler_tags = CommandHandler('tags', handle_gettags)
+
+def handle_addtag(bot, update, args=list()):
+    print("handle_addtag args=" + str(args))
+    message = update.message
+
+    tag = ' '.join(args)
+    if tag.isspace():
+        print('no tag added')
+        response = "Please provide a tag to add."
+    else:
+        print('adding tag "' + tag + '"')
+        TAGS.append(tag)
+        response = "Tag \"" + tag + "\" added. Current tags: " + ', '.join(TAGS)
+        
+    print("current tags: " + ', '.join(TAGS))
+
+    message.reply_text(text=response)
+
+handler_addtag = CommandHandler('addtag', handle_addtag, pass_args=True)
 
 def main():
     print("main")
