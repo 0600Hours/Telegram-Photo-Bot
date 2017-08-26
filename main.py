@@ -284,6 +284,21 @@ def handle_unregister(bot, update):
 
 handler_unregister = CommandHandler('unregister', handle_unregister)
 
+def handle_clearhistory(bot, update):
+    print("handle_clearhistory")
+    message = update.message
+
+    if is_admin(message.from_user):
+        PAST_IDS = []
+        open('file.txt', 'w').close()
+        response = "Image history has been cleared."
+    else:
+        response = UNAUTH_MESSAGE
+
+    message.reply_text(text=response)
+
+handler_clearhistory = CommandHandler('clearhistory', handle_clearhistory)
+
 def main():
     print("main")
     # find everything that starts with 'handler_' and add it as a handler
