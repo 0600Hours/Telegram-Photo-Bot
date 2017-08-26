@@ -251,6 +251,39 @@ def handle_register(bot, update):
 
 handler_register = CommandHandler('register', handle_register)
 
+def handle_unregister(bot, update):
+    print("handle_unregister")
+    message = update.message
+
+    if is_admin(message.from_user):
+        chat = str(message.chat.id)
+        print('chat: ' + chat)
+
+        chats = get_chats()
+
+        if chat in chats:
+            print("removing chat")
+
+            f = open(CHAT_FILE_PATH, "r")
+            lines = f.readlines()
+            f.close()
+            f = open(CHAT_FILE_PATH, "w")
+            for line in lines:
+                if line != chat + "\n":
+                    f.write(line)
+            f.close()
+
+            response = "Chat has been unregistered."
+        else:
+            print("already not registered")
+            response = "This chat is already not registered.."
+    else:
+        response = UNAUTH_MESSAGE
+
+    message.reply_text(text=response)
+
+handler_unregister = CommandHandler('unregister', handle_unregister)
+
 def main():
     print("main")
     # find everything that starts with 'handler_' and add it as a handler
