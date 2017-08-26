@@ -5,6 +5,7 @@ import urllib.request, json
 from operator import attrgetter
 import random
 import traceback
+import os.path
 
 import tokens
 
@@ -18,7 +19,9 @@ FLICKR_TOKEN = tokens.FLICKR_TOKEN
 DELAY = 2 * 60 * 60
 TAGS = ["tiger", "cheetah", "lion", "snow leopard"]
 ID_FILE_PATH = "ids.txt"
+CHAT_FILE_PATH = "chats.txt"
 PAST_IDS = []
+DELAY = 30
 
 class PhotoBot:
     def __init__(self, token, handlers):
@@ -33,8 +36,32 @@ class PhotoBot:
         print("run")
         self.updater.start_polling()
         self.updater.idle()
+        scheduled_post(updater.bot)
 
 # Non-handler helper methods
+
+def get_chats():
+    print("get_chats")
+
+    if not os.path.isfile(CHAT_FILE_PATH):
+        return []
+    else:
+        with open(CHAT_FILE_PATH, 'r') as chat_file:
+        return chat_file.read().splitlines()
+
+def scheduled_post(bot):
+    print("scheduled_post")
+
+    tag = random.choice(TAGS)
+    print("tag: " + tag)
+
+    photo_id, photo_url = get_photo(tag)
+
+    chats = get_chats()
+
+    for chat in chats:
+        print("sending to chat " + chat)
+        bot.send_photo(chat_id = chat, photo = photo_url)
 
 def get_photo(tag):
     print("get_photo tag=" + tag)
@@ -175,7 +202,8 @@ handler_rmtag = CommandHandler('rmtag', handle_rmtag, pass_args=True)
 
 def main():
     print("main")
-    handlers = [v for k, v in globals().items() if k.startswith('handler')] # find everything that starts with 'handler_' and add it
+    # find everything that starts with 'handler_' and add it as a handler
+    handlers = [v for k, v in globals().items() if k.startswith('handler')]
 
     with open(ID_FILE_PATH, 'w+') as id_file:
         PAST_IDS = id_file.read().splitlines()
