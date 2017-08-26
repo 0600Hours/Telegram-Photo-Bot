@@ -24,6 +24,8 @@ CHAT_FILE_PATH = "chats.txt"
 PAST_IDS = []
 DELAY = 30
 CHANNEL_ID = -1001110839197
+ADMINS = [182524440]
+UNAUTH_MESSAGE = "You must be an admin to use that command."
 
 class PhotoBot:
     def __init__(self, token, handlers):
@@ -140,6 +142,9 @@ def get_photo(tag):
 
     return image_info['id'], largest['source']
 
+def is_admin(user):
+    return user.id in ADMINS
+
 # command handlers
 
 def handle_getpic(bot, update, args=list()):
@@ -174,19 +179,22 @@ def handle_addtag(bot, update, args=list()):
     print("handle_addtag args=" + str(args))
     message = update.message
 
-    tag = ' '.join(args)
-    if tag.isspace():
-        print('no tag provided')
-        response = "Please provide a tag to add."
-    elif tag in TAGS:
-        print('tag already exists')
-        response = "\"" + tag + "\" is already a tag."
+    if is_admin(message.from_user):
+        tag = ' '.join(args)
+        if tag.isspace():
+            print('no tag provided')
+            response = "Please provide a tag to add."
+        elif tag in TAGS:
+            print('tag already exists')
+            response = "\"" + tag + "\" is already a tag."
+        else:
+            print('adding tag "' + tag + '"')
+            TAGS.append(tag)
+            response = "Tag \"" + tag + "\" added. Current tags: " + ', '.join(TAGS)
+            
+        print("current tags: " + ', '.join(TAGS))
     else:
-        print('adding tag "' + tag + '"')
-        TAGS.append(tag)
-        response = "Tag \"" + tag + "\" added. Current tags: " + ', '.join(TAGS)
-        
-    print("current tags: " + ', '.join(TAGS))
+        response = UNAUTH_MESSAGE
 
     message.reply_text(text=response)
 
@@ -196,19 +204,22 @@ def handle_rmtag(bot, update, args=list()):
     print("handle_rmtag args=" + str(args))
     message = update.message
 
-    tag = ' '.join(args)
-    if tag.isspace():
-        print('no tag provided')
-        response = "Please provide a tag to remove."
-    elif tag in TAGS:
-        print('removing tag "' + tag + '"')
-        TAGS.remove(tag)
-        response = "Tag \"" + tag + "\" removed. Current tags: " + ', '.join(TAGS)
+    if is_admin(message.from_user):
+        tag = ' '.join(args)
+        if tag.isspace():
+            print('no tag provided')
+            response = "Please provide a tag to remove."
+        elif tag in TAGS:
+            print('removing tag "' + tag + '"')
+            TAGS.remove(tag)
+            response = "Tag \"" + tag + "\" removed. Current tags: " + ', '.join(TAGS)
+        else:
+            print('couldnt find tag "' + tag + '"')
+            response = "No tag matching \"" + tag + "\" could be found."
+            
+        print("current tags: " + ', '.join(TAGS))
     else:
-        print('couldnt find tag "' + tag + '"')
-        response = "No tag matching \"" + tag + "\" could be found."
-        
-    print("current tags: " + ', '.join(TAGS))
+        response = UNAUTH_MESSAGE
 
     message.reply_text(text=response)
 
@@ -218,20 +229,23 @@ def handle_register(bot, update):
     print("handle_register")
     message = update.message
 
-    chat = str(message.chat.id)
-    print('chat: ' + chat)
+    if is_admin(message.from_user):
+        chat = str(message.chat.id)
+        print('chat: ' + chat)
 
-    chats = get_chats()
+        chats = get_chats()
 
-    if chat in chats:
-        print("already registered")
-        response = "This chat is already registered."
+        if chat in chats:
+            print("already registered")
+            response = "This chat is already registered."
+        else:
+            with open(CHAT_FILE_PATH, 'a') as chat_file:
+                chat_file.write(chat + '\n')
+
+            print("chat added")
+            response = "Chat has been registered."
     else:
-        with open(CHAT_FILE_PATH, 'a') as chat_file:
-            chat_file.write(chat + '\n')
-
-        print("chat added")
-        response = "Chat has been registered."
+        response = UNAUTH_MESSAGE
 
     message.reply_text(text=response)
 
