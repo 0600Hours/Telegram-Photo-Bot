@@ -137,6 +137,9 @@ def handle_addtag(bot, update, args=list()):
     if tag.isspace():
         print('no tag provided')
         response = "Please provide a tag to add."
+    elif tag in TAGS:
+        print('tag already exists')
+        response = "\"" + tag + "\" is already a tag."
     else:
         print('adding tag "' + tag + '"')
         TAGS.append(tag)
@@ -156,14 +159,13 @@ def handle_rmtag(bot, update, args=list()):
     if tag.isspace():
         print('no tag provided')
         response = "Please provide a tag to remove."
+    elif tag in TAGS:
+        print('removing tag "' + tag + '"')
+        TAGS.remove(tag)
+        response = "Tag \"" + tag + "\" removed. Current tags: " + ', '.join(TAGS)
     else:
-        if tag in TAGS:
-            print('removing tag "' + tag + '"')
-            TAGS.remove(tag)
-            response = "Tag \"" + tag + "\" added. Current tags: " + ', '.join(TAGS)
-        else:
-            print('couldnt find tag "' + tag + '"')
-            response = "No tag matching \"" + tag + "\" could be found."
+        print('couldnt find tag "' + tag + '"')
+        response = "No tag matching \"" + tag + "\" could be found."
         
     print("current tags: " + ', '.join(TAGS))
 
