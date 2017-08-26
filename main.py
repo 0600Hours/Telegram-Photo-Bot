@@ -6,6 +6,7 @@ from operator import attrgetter
 import random
 import traceback
 import os.path
+import threading
 
 import tokens
 
@@ -36,7 +37,6 @@ class PhotoBot:
         print("run")
         self.updater.start_polling()
         self.updater.idle()
-        scheduled_post(updater.bot)
 
 # Non-handler helper methods
 
@@ -62,6 +62,8 @@ def scheduled_post(bot):
     for chat in chats:
         print("sending to chat " + chat)
         bot.send_photo(chat_id = chat, photo = photo_url)
+
+    threading.Timer(DELAY, scheduled_post, args=[bot])
 
 def get_photo(tag):
     print("get_photo tag=" + tag)
@@ -121,6 +123,8 @@ def get_photo(tag):
     print("chose size {0} ({1}x{2}) at {3}".format(largest['label'], largest['width'], largest['height'], largest['source']))
 
     PAST_IDS.append(image_info['id'])
+    with open(ID_FILE_PATH, 'a') as id_file:
+        id_file.write(photo_id + "\n")
 
     return image_info['id'], largest['source']
 
@@ -138,8 +142,6 @@ def handle_getpic(bot, update, args=list()):
     print("tag=" + tag)
 
     photo_id, photo_url = get_photo(tag)
-    with open(ID_FILE_PATH, 'a') as id_file:
-        id_file.write(photo_id + "\n")
     message.reply_photo(photo=photo_url)
 
 handler_getpic = CommandHandler('getpic', handle_getpic, pass_args=True)
