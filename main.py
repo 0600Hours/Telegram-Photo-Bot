@@ -38,6 +38,11 @@ class PhotoBot:
         self.updater.start_polling()
         self.updater.idle()
 
+    def begin_autopost(self):
+        print("begin_autopost")
+        bot = self.updater.bot
+        threading.Timer(DELAY, scheduled_post, args=[bot]).start()
+
 # Non-handler helper methods
 
 def get_chats():
@@ -47,7 +52,7 @@ def get_chats():
         return []
     else:
         with open(CHAT_FILE_PATH, 'r') as chat_file:
-        return chat_file.read().splitlines()
+            return chat_file.read().splitlines()
 
 def scheduled_post(bot):
     print("scheduled_post")
@@ -60,10 +65,13 @@ def scheduled_post(bot):
     chats = get_chats()
 
     for chat in chats:
-        print("sending to chat " + chat)
-        bot.send_photo(chat_id = chat, photo = photo_url)
+        if chat:
+            print("sending to chat " + chat)
+            bot.send_photo(chat_id = int(chat), photo = photo_url)
 
-    threading.Timer(DELAY, scheduled_post, args=[bot])
+    print("done sending")
+
+    threading.Timer(DELAY, scheduled_post, args=[bot]).start()
 
 def get_photo(tag):
     print("get_photo tag=" + tag)
@@ -124,7 +132,7 @@ def get_photo(tag):
 
     PAST_IDS.append(image_info['id'])
     with open(ID_FILE_PATH, 'a') as id_file:
-        id_file.write(photo_id + "\n")
+        id_file.write(image_info['id'] + "\n")
 
     return image_info['id'], largest['source']
 
@@ -202,6 +210,29 @@ def handle_rmtag(bot, update, args=list()):
 
 handler_rmtag = CommandHandler('rmtag', handle_rmtag, pass_args=True)
 
+def handle_register(bot, update):
+    print("handle_register")
+    message = update.message
+
+    chat = str(message.chat.id)
+    print('chat: ' + chat)
+
+    chats = get_chats()
+
+    if chat in chats:
+        print("already registered")
+        response = "This chat is already registered."
+    else:
+        with open(CHAT_FILE_PATH, 'a') as chat_file:
+            chat_file.write(chat + '\n')
+
+        print("chat added")
+        response = "Chat has been registered."
+
+    message.reply_text(text=response)
+
+handler_register = CommandHandler('register', handle_register)
+
 def main():
     print("main")
     # find everything that starts with 'handler_' and add it as a handler
@@ -211,6 +242,7 @@ def main():
         PAST_IDS = id_file.read().splitlines()
 
     quote = PhotoBot(BOT_TOKEN, handlers)
+    quote.begin_autopost()
     quote.run()
 
 if __name__ == '__main__':
