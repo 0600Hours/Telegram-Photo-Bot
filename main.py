@@ -290,7 +290,7 @@ def handle_clearhistory(bot, update):
 
     if is_admin(message.from_user):
         PAST_IDS = []
-        open('file.txt', 'w').close()
+        open(ID_FILE_PATH, 'w').close()
         response = "Image history has been cleared."
     else:
         response = UNAUTH_MESSAGE
