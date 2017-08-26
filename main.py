@@ -22,10 +22,11 @@ TAGS = ["tiger", "cheetah", "lion", "snow leopard"]
 ID_FILE_PATH = "ids.txt"
 CHAT_FILE_PATH = "chats.txt"
 PAST_IDS = []
-DELAY = 30
+DELAY = 60 * 60 * 2
 CHANNEL_ID = -1001110839197
 ADMINS = [182524440]
 UNAUTH_MESSAGE = "You must be an admin to use that command."
+TIMER = null
 
 class PhotoBot:
     def __init__(self, token, handlers):
@@ -44,7 +45,7 @@ class PhotoBot:
     def begin_autopost(self):
         print("begin_autopost")
         bot = self.updater.bot
-        threading.Timer(DELAY, scheduled_post, args=[bot]).start()
+        TIMER = threading.Timer(DELAY, scheduled_post, args=[bot]).start()
 
 # Non-handler helper methods
 
@@ -77,7 +78,7 @@ def scheduled_post(bot):
 
     print("done sending")
 
-    threading.Timer(DELAY, scheduled_post, args=[bot]).start()
+    TIMER = threading.Timer(DELAY, scheduled_post, args=[bot]).start()
 
 def get_photo(tag):
     print("get_photo tag=" + tag)
@@ -298,6 +299,43 @@ def handle_clearhistory(bot, update):
     message.reply_text(text=response)
 
 handler_clearhistory = CommandHandler('clearhistory', handle_clearhistory)
+
+def handle_stop(bot, update):
+    print("handle_stop")
+    message = update.message
+
+    if is_admin(message.from_user):
+        print("cancelling timer")
+        if (TIMER):
+            TIMER.cancel()
+            TIMER = null
+            response = "Automatic posting disabled."
+        else:
+            response = "Automatic posting is already disabled."
+    else:
+        response = UNAUTH_MESSAGE
+
+    message.reply_text(text=response)
+
+handler_stop = CommandHandler('stop', handle_stop)
+
+def handle_start(bot, update):
+    print("handle_start")
+    message = update.message
+
+    if is_admin(message.from_user):
+        print("posting")
+        if (TIMER):
+            response = "Automatic posting is already enabled."
+            scheduled_post(bot)
+        else:
+            response = "Automatic posting enabled."
+    else:
+        response = UNAUTH_MESSAGE
+
+    message.reply_text(text=response)
+
+handler_start = CommandHandler('start', handle_start)
 
 def main():
     print("main")
