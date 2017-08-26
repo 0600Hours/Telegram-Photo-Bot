@@ -23,6 +23,7 @@ ID_FILE_PATH = "ids.txt"
 CHAT_FILE_PATH = "chats.txt"
 PAST_IDS = []
 DELAY = 30
+CHANNEL_ID = -1001110839197
 
 class PhotoBot:
     def __init__(self, token, handlers):
@@ -64,10 +65,13 @@ def scheduled_post(bot):
 
     chats = get_chats()
 
+    print("sending to channel")
+    message = bot.send_photo(chat_id = CHANNEL_ID, photo = photo_url)
+
     for chat in chats:
         if chat:
             print("sending to chat " + chat)
-            bot.send_photo(chat_id = int(chat), photo = photo_url)
+            bot.forward_message(chat_id = int(chat), from_chat_id = CHANNEL_ID, message_id = message.message_id)
 
     print("done sending")
 
@@ -238,7 +242,7 @@ def main():
     # find everything that starts with 'handler_' and add it as a handler
     handlers = [v for k, v in globals().items() if k.startswith('handler')]
 
-    with open(ID_FILE_PATH, 'w+') as id_file:
+    with open(ID_FILE_PATH, 'r') as id_file:
         PAST_IDS = id_file.read().splitlines()
 
     quote = PhotoBot(BOT_TOKEN, handlers)
