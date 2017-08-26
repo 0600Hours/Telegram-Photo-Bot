@@ -135,7 +135,7 @@ def handle_addtag(bot, update, args=list()):
 
     tag = ' '.join(args)
     if tag.isspace():
-        print('no tag added')
+        print('no tag provided')
         response = "Please provide a tag to add."
     else:
         print('adding tag "' + tag + '"')
@@ -148,9 +148,32 @@ def handle_addtag(bot, update, args=list()):
 
 handler_addtag = CommandHandler('addtag', handle_addtag, pass_args=True)
 
+def handle_rmtag(bot, update, args=list()):
+    print("handle_rmtag args=" + str(args))
+    message = update.message
+
+    tag = ' '.join(args)
+    if tag.isspace():
+        print('no tag provided')
+        response = "Please provide a tag to remove."
+    else:
+        if tag in TAGS:
+            print('removing tag "' + tag + '"')
+            TAGS.remove(tag)
+            response = "Tag \"" + tag + "\" added. Current tags: " + ', '.join(TAGS)
+        else:
+            print('couldnt find tag "' + tag + '"')
+            response = "No tag matching \"" + tag + "\" could be found."
+        
+    print("current tags: " + ', '.join(TAGS))
+
+    message.reply_text(text=response)
+
+handler_rmtag = CommandHandler('rmtag', handle_rmtag, pass_args=True)
+
 def main():
     print("main")
-    handlers = [v for k, v in globals().items() if k.startswith('handler')]
+    handlers = [v for k, v in globals().items() if k.startswith('handler')] # find everything that starts with 'handler_' and add it
 
     with open(ID_FILE_PATH, 'w+') as id_file:
         PAST_IDS = id_file.read().splitlines()
